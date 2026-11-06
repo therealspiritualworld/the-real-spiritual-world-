@@ -196,12 +196,12 @@ document.getElementById("saveProductBtn").onclick = async () => {
   }
 
   const { error } = await db.from("Products").insert([{
-    name,
-    description,
-    price,
-    product_type,
-    image_url,
-    published
+    "Name": name,
+    "Description": description,
+    "Price": price,
+    "Product_type": product_type,
+    "Image_url": image_url,
+    "Published": published
   }]);
 
   if (error) {

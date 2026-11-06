@@ -111,15 +111,40 @@ document.getElementById("saveBtn").onclick = async () => {
   loadArticles();
 };
 
-async function loadArticles(){
+async function loadArticles(){. async function loadArticles(){
   const {data,error} = await db.from("articles")
-    .select("title,published,created_at")
+    .select("id,title,published,created_at")
     .order("created_at",{ascending:false});
 
   const list = document.getElementById("articles");
   list.replaceChildren();
 
-  if(error){message.textContent=error.message;return;}
+  if(error){
+    message.textContent = error.message;
+    return;
+  }
+
+  data.forEach(article=>{
+    const item = document.createElement("div");
+    item.className = "article";
+
+    const heading = document.createElement("strong");
+    heading.textContent = article.title;
+
+    const status = document.createElement("p");
+    status.textContent = article.published ? "Published" : "Draft";
+
+    const publishButton = document.createElement("button");
+    publishButton.textContent = article.published ? "Unpublish" : "Publish";
+    publishButton.onclick = () => updateArticle(article.id, !article.published);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "Delete";
+    deleteButton.onclick = () => deleteArticle(article.id);
+
+    item.append(heading, status, publishButton, deleteButton);
+    list.appendChild(item);
+  }); }
 
   data.forEach(article=>{
     const item=document.createElement("div");
@@ -128,7 +153,33 @@ async function loadArticles(){
     list.appendChild(item);
   });
 }
+async function updateArticle(id, published) {
+  const { error } = await db.from("articles")
+    .update({ published })
+    .eq("id", id);
 
+  if (error) {
+    message.textContent = error.message;
+  } else {
+    message.textContent = "Article updated successfully!";
+    loadArticles();
+  }
+}
+
+async function deleteArticle(id) {
+  if (!confirm("Are you sure you want to delete this article?")) return;
+
+  const { error } = await db.from("articles")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    message.textContent = error.message;
+  } else {
+    message.textContent = "Article deleted successfully!";
+    loadArticles();
+  }
+}
 document.getElementById("logoutBtn").onclick = async () => {
   await db.auth.signOut();
   dashboard.classList.add("hidden");

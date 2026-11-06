@@ -195,14 +195,15 @@ document.getElementById("saveProductBtn").onclick = async () => {
     return;
   }
 
-  const { error } = await db.from("Products").insert([{
-    "Name": name,
-    "Description": description,
-    "Price": price,
-    "Product_type": product_type,
-    "Image_url": image_url,
-    "Published": published
-  }]);
+
+const { error } = await db.from("Products").insert([{
+  name: name,
+  Discription: description,
+  Price: price,
+  Products_type: product_type,
+  Image_url: image_url,
+  Published: published
+}]);
 
   if (error) {
     productMessage.textContent = error.message;

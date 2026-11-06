@@ -179,8 +179,68 @@ document.getElementById("logoutBtn").onclick = async () => {
   login.classList.remove("hidden");
   message.textContent="Logged out.";
 };
+document.addEventListener("DOMContentLoaded", () => {
+document.getElementById("saveProductBtn").onclick = async () => {
+  const name = document.getElementById("productName").value.trim();
+  const description = document.getElementById("productDescription").value.trim();
+  const price = Number(document.getElementById("productPrice").value);
+  const product_type = document.getElementById("productType").value;
+  const image_url = document.getElementById("productImage").value.trim();
+  const published = document.getElementById("productPublished").checked;
 
+  const productMessage = document.getElementById("productMessage");
+
+  if (!name || !description || !price) {
+    productMessage.textContent = "Please fill all required fields.";
+    return;
+  }
+
+  const { error } = await db.from("Products").insert([{
+    name,
+    description,
+    price,
+    product_type,
+    image_url,
+    published
+  }]);
+
+  if (error) {
+    productMessage.textContent = error.message;
+  } else {
+    productMessage.textContent = "Product saved successfully!";
+    document.getElementById("productName").value = "";
+    document.getElementById("productDescription").value = "";
+    document.getElementById("productPrice").value = "";
+    document.getElementById("productImage").value = "";
+    document.getElementById("productPublished").checked = false;
+  }
+};
+});
 checkAdmin();
 </script>
+<hr>
+<h2>Manage Products</h2>
+
+<input id="productName" placeholder="Product Name">
+
+<textarea id="productDescription" placeholder="Product Description"></textarea>
+
+<input id="productPrice" type="number" placeholder="Price in INR">
+
+<select id="productType">
+  <option value="physical">Physical Product</option>
+  <option value="digital">Digital Product</option>
+</select>
+
+<input id="productImage" placeholder="Product Image URL">
+
+<label>
+  <input id="productPublished" type="checkbox" style="width:auto">
+  Publish Product
+</label>
+
+<button id="saveProductBtn">Save Product</button>
+
+<p id="productMessage"></p>
 </body>
 </html>

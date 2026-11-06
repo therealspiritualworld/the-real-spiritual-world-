@@ -111,7 +111,7 @@ document.getElementById("saveBtn").onclick = async () => {
   loadArticles();
 };
 
-async function loadArticles(){. async function loadArticles(){
+async function loadArticles(){async function loadArticles(){
   const {data,error} = await db.from("articles")
     .select("id,title,published,created_at")
     .order("created_at",{ascending:false});
@@ -144,7 +144,8 @@ async function loadArticles(){. async function loadArticles(){
 
     item.append(heading, status, publishButton, deleteButton);
     list.appendChild(item);
-  }); }
+  });
+}
 
   data.forEach(article=>{
     const item=document.createElement("div");

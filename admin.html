@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - The Real Spiritual World</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{font-family:Arial;background:#f4f1ea;margin:0;padding:25px;color:#29251f}
+.container{max-width:700px;margin:30px auto;background:white;padding:25px;border-radius:12px}
+input,textarea,button{width:100%;padding:12px;margin:8px 0;box-sizing:border-box}
+textarea{height:180px}
+button{background:#725334;color:white;border:0;border-radius:6px;cursor:pointer}
+h1{color:#725334}
+.hidden{display:none}
+.article{padding:12px;border-bottom:1px solid #ddd}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>The Real Spiritual World</h1>
+<h2>Admin Dashboard</h2>
+
+<div id="login">
+<h3>Admin Login</h3>
+<input id="email" type="email" placeholder="Email address">
+<input id="password" type="password" placeholder="Password">
+<button id="loginBtn">Login</button>
+</div>
+
+<div id="dashboard" class="hidden">
+<h3>Write a New Article</h3>
+<input id="title" placeholder="Article Title">
+<input id="category" placeholder="Category" value="Spiritual Wisdom">
+<textarea id="content" placeholder="Write your article here..."></textarea>
+<label><input id="published" type="checkbox" style="width:auto"> Publish article now</label>
+<button id="saveBtn">Save Article</button>
+<button id="logoutBtn">Logout</button>
+<p id="message"></p>
+<h3>Your Articles</h3>
+<div id="articles"></div>
+</div>
+</div>
+
+<script>
+const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
+const SUPABASE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const login = document.getElementById("login");
+const dashboard = document.getElementById("dashboard");
+const message = document.getElementById("message");
+
+async function checkAdmin(){
+  const {data:{user}} = await db.auth.getUser();
+  if(!user) return;
+
+  const {data,error} = await db
+    .from("admins")
+    .select("user_id")
+    .eq("user_id",user.id)
+    .maybeSingle();
+
+  if(error || !data){
+    message.textContent = "This account is not an admin.";
+    return;
+  }
+
+  login.classList.add("hidden");
+  dashboard.classList.remove("hidden");
+  loadArticles();
+}
+
+document.getElementById("loginBtn").onclick = async () => {
+  message.textContent = "Logging in...";
+  const {error} = await db.auth.signInWithPassword({
+    email:document.getElementById("email").value,
+    password:document.getElementById("password").value
+  });
+
+  if(error){message.textContent=error.message;return;}
+  await checkAdmin();
+};
+
+document.getElementById("saveBtn").onclick = async () => {
+  const title = document.getElementById("title").value.trim();
+  const content = document.getElementById("content").value.trim();
+  const category = document.getElementById("category").value.trim();
+
+  if(!title || !content){
+    message.textContent = "Please enter title and content.";
+    return;
+  }
+
+  const slug = title.toLowerCase()
+    .replace(/[^a-z0-9]+/g,"-")
+    .replace(/^-|-$/g,"") + "-" + Date.now();
+
+  const {error} = await db.from("articles").insert([{
+    title,slug,category,content,
+    published:document.getElementById("published").checked
+  }]);
+
+  if(error){message.textContent=error.message;return;}
+
+  message.textContent = "Article saved successfully!";
+  document.getElementById("title").value="";
+  document.getElementById("content").value="";
+  document.getElementById("published").checked=false;
+  loadArticles();
+};
+
+async function loadArticles(){
+  const {data,error} = await db.from("articles")
+    .select("title,published,created_at")
+    .order("created_at",{ascending:false});
+
+  const list = document.getElementById("articles");
+  list.replaceChildren();
+
+  if(error){message.textContent=error.message;return;}
+
+  data.forEach(article=>{
+    const item=document.createElement("div");
+    item.className="article";
+    item.textContent=article.title+" — "+(article.published?"Published":"Draft");
+    list.appendChild(item);
+  });
+}
+
+document.getElementById("logoutBtn").onclick = async () => {
+  await db.auth.signOut();
+  dashboard.classList.add("hidden");
+  login.classList.remove("hidden");
+  message.textContent="Logged out.";
+};
+
+checkAdmin();
+</script>
+</body>
+</html>
